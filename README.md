@@ -1,116 +1,124 @@
-# 0. 一些建议：
+# 基于 YOLOv8 的无人机障碍物识别系统
 
-使用Anaconda来管理Python虚拟环境及包
+## 1. 项目简介
 
-安装包时一定要注意版本对应关系！！！[包列表](#article_button)会在页尾列出
+本项目是一个**基于 YOLOv8 的无人机障碍物识别系统**，主要用于无人机飞行场景下的实时目标检测与障碍物识别。系统通过无人机搭载摄像头采集图像信息，利用 YOLOv8 模型对图像中的障碍物进行识别与定位，可检测行人、车辆、树木、建筑物、路障等目标，并输出目标类别、位置信息和置信度。
 
-查看本机GPU信息：
+本系统结合前后端开发方式，后端基于 **Flask**，前端基于 **Vue**，实现了图像上传、目标检测、结果展示等功能。该系统可应用于无人机巡检、智能导航、低空监测、环境感知等场景，为无人机自主避障与智能飞行提供支持。
+
+---
+
+## 2. 环境配置建议
+
+建议使用 **Anaconda** 管理 Python 虚拟环境及相关依赖包。
+
+安装依赖时一定要注意以下版本之间的对应关系：
+- Python
+- CUDA
+- PyTorch
+- torchvision
+- torchaudio
+- ultralytics
+
+### 查看本机 GPU 信息
+
 ```shell
 nvidia-smi
-```
-安装gpu版本[Pytorch](https://download.pytorch.org/whl/torch_stable.html)，注意CUDA版本[Release Notes :: CUDA Toolkit Documentation (nvidia.com)](https://docs.nvidia.com/cuda/cuda-toolkit-release-notes/index.html)
 
-首先是[各种版本的DUDA的下载链接](https://developer.nvidia.com/cuda-toolkit-archive)
-
-查看CUDA是否安装：
-```shell
+查看 CUDA 是否安装成功
 nvcc -V
-```
 
-本人的安装命令，仅供参考：
+安装 GPU 版本 PyTorch
 
-```shell
+请根据本机 CUDA 版本安装对应版本的 PyTorch。
+
+示例安装命令：
+
 conda install pytorch torchvision torchaudio pytorch-cuda=11.7 -c pytorch -c nvidia
-```
+验证 GPU 是否可用
+import torch
+print(torch.cuda.device_count())   # GPU 数量，应大于 0
+print(torch.cuda.is_available())   # 是否可用，应为 True
 
-版本对应超级重要！！！目前都是cu117版本，可以使用conda list检查
-当前构建版本CUDA 11.7
+3. 系统效果展示
 
-```python
-import torch #导入torch包
-torch.cuda.device_count() #查看GPU数，需要大于0
-torch.cuda.is_available() #验证GPU是否已激活，需要是true
-```
+## 系统效果展示
+![检测效果图1](./Readme_assets/main1.png)
+![检测效果图2](./Readme_assets/main2.png)
+![检测效果图3](./Readme_assets/main3.png)
+![检测效果图4](./Readme_assets/main4.png)
+![检测效果图5](./Readme_assets/main5.png)
 
-# 1. 效果：
-[展示视频](https://www.bilibili.com/video/BV18g4y137oR/)
+4. 项目结构
+.
+├── back-end                  # Flask 后端
+│   ├── app.py
+│   ├── processor
+│   │   └── AIDetector_pytorch.py
+│   ├── weights              # 模型权重
+│   ├── static
+│   ├── templates
+│   └── utils
+├── front-end                 # Vue 前端
+│   ├── src
+│   ├── public
+│   └── package.json
+├── Readme_assets             # README 图片资源
+└── README.md
 
-![主界面](https://github.com/Dovahkiin-Ming/Personnel-Flow-Monitoring-System-based-on-YoloV5/blob/master/main.png)
+5. YOLOv8 模型训练
 
-# 2. YOLOv5模型训练：
+YOLOv8 官方项目地址：
+Ultralytics YOLO
 
-[YoloV5官方](https://github.com/ultralytics/yolov5)的参考训练命令：
+安装 ultralytics
+pip install ultralytics
+训练命令示例
+yolo detect train data=data/drone_obstacle.yaml model=yolov8m.pt epochs=100 imgsz=640 batch=8
+参数说明
+data：数据集配置文件
+model：预训练模型
+epochs：训练轮数
+imgsz：输入图像尺寸
+batch：批大小
+训练参数并不是越大越好，应根据数据集规模、显存大小和实验结果综合调整。
 
-```shell
-python train.py --data coco.yaml --epochs 300 --weights '' --cfg yolov5n.yaml  --batch-size 128
-```
+6. YOLOv8 模型预测
+命令行预测示例
+yolo detect predict model=weights/best.pt source=demo.jpg
+Python 调用示例
+from ultralytics import YOLO
 
-这里演示的话我就用官方训练好的 yolov5m.pt 模型。
+model = YOLO("weights/best.pt")
+results = model("demo.jpg", save=True, conf=0.25)
 
-这里我自己的训练命令：
+for result in results:
+    boxes = result.boxes
+    for box in boxes:
+        cls_id = int(box.cls[0])
+        conf = float(box.conf[0])
+        print(f"class_id: {cls_id}, confidence: {conf:.3f}")
 
-```shell
-python train.py --data coco.yaml --epochs 10 --weights yolov5m.pt --batch-size 8
-```
+系统可输出：
+目标类别
+边界框坐标
+检测置信度
+若需要仅检测特定障碍物类别，可在后处理阶段增加类别筛选逻辑。
 
-这里需要注意的参数是epochs训练轮数，weights预训练模型，以及batch-size每次输入大小
-各项参数并非越高越好，需要多次验证，选择最适合的参数
+7. 后端部署（开发）
 
-# 3. YOLOv5模型预测：
+本项目后端基于 Flask 开发，负责接收前端上传的图像并调用 YOLOv8 模型完成检测。
 
-【[AIDetector_pytorch.py](https://github.com/Dovahkiin-Ming/Personnel-Flow-Monitoring-System-based-on-YoloV5/blob/beta/back-end/processor/AIDetector_pytorch.py)】
+启动后端
 
-这里因为我只做人流量监测，所以做了筛选，删除即可正常检测80种类别
-```python
-def detect(self, im):
-        im0, img = self.preprocess(im)
-        pred = self.m(img, augment=False)[0]
-        pred = pred.float()
-        pred = non_max_suppression(pred, self.threshold, 0.3)
-        pred_boxes = []
-        image_info = {}
-        count = 0
-        for det in pred:
-            if det is not None and len(det):
-                det[:, :4] = scale_coords(
-                    img.shape[2:], det[:, :4], im0.shape).round()
-                for *x, conf, cls_id in det:
-                    lbl = self.names[int(cls_id)] #用个中间参来保存人物类型名称
-                    x1, y1 = int(x[0]), int(x[1])
-                    x2, y2 = int(x[2]), int(x[3])
-                    pred_boxes.append(
-                        (x1, y1, x2, y2, lbl, conf))
-                    # count += 1
-                    key = ""
-                    if lbl == "person" : #只输出【人】
-                        count += 1
-                        key = '{}-{:02}'.format(lbl, count) #输出类型和编号
-                        image_info[key] = ['{}×{}'.format(
-                            x2-x1, y2-y1), np.round(float(conf), 3)] #输出大小和置信度
-                        #数据库操作模块
-                        db = SQLManager()
-                        keydb = '\'' + key + '\''#目标代号
-                        image_info01db = '\'' + '{}×{}'.format(x2-x1, y2-y1) + '\''#图像大小
-                        image_info02db =  '\'' + str(np.round(float(conf), 3)) + '\''#置信度
-                        datatimenow = '\'' + str(datetime.datetime.now().replace(microsecond=0)) + '\''#时间戳
-                        sql = 'INSERT INTO imginfo VALUES(' + keydb + ' ,' + image_info01db + ' ,' + image_info02db + ' ,' + datatimenow + ');'
-                        db.moddify(sql)
-                        db.close()
-```
+在 Flask 后端项目目录下运行：
 
-# 4. 后端部署（开发）：
-
-【[app.py](https://github.com/Dovahkiin-Ming/Personnel-Flow-Monitoring-System-based-on-YoloV5/blob/beta/back-end/app.py)】
-
+python app.py
 路由示例
-```python
 @app.route('/')
 def hello_world():
     return redirect(url_for('static', filename='./index.html'))
-```
-
-数据库操作示例
-```python
+数据接口示例
 @app.route('/testdb', methods=['GET', 'POST'])
 def testdb():
     db = SQLManager()
@@ -118,269 +126,67 @@ def testdb():
     db.close()
     return jsonify({'status': 1,
                     'historical_data': show_data_db})
-```
 
-# 5. 前端部署（开发）：
-
-【[Content.vue](https://github.com/Dovahkiin-Ming/Personnel-Flow-Monitoring-System-based-on-YoloV5/blob/beta/front-end/src/components/Content.vue)】
-
-摄像头模块
-```javascript
-getCompetence () {
-        this.showbutton = false;
-        var _this = this
-        this.thisCancas = document.getElementById('canvasCamera')
-        this.thisContext = this.thisCancas.getContext('2d')
-        this.thisVideo = document.getElementById('videoCamera')
-        // this.switchdisvalue = !this.switchdisvalue //必须开启摄像头才可以调整自动模式【功能更新，开关仅作为示意】
-        // 旧版本浏览器可能根本不支持mediaDevices，我们首先设置一个空对象
-        if (navigator.mediaDevices === undefined) {
-          navigator.mediaDevices = {}
-        }
-        // 一些浏览器实现了部分mediaDevices，我们不能只分配一个对象
-        // 使用getUserMedia，因为它会覆盖现有的属性。
-        // 这里，如果缺少getUserMedia属性，就添加它。
-        if (navigator.mediaDevices.getUserMedia === undefined) {
-          navigator.mediaDevices.getUserMedia = function (constraints) {
-            // 首先获取现存的getUserMedia(如果存在)
-            var getUserMedia = navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.getUserMedia
-            // 有些浏览器不支持，会返回错误信息
-            // 保持接口一致
-            if (!getUserMedia) {
-              return Promise.reject(new Error('getUserMedia is not implemented in this browser'))
-            }
-            // 否则，使用Promise将调用包装到旧的navigator.getUserMedia
-            return new Promise(function (resolve, reject) {
-              getUserMedia.call(navigator, constraints, resolve, reject)
-            })
-          }
-        }
-        var constraints = { audio: false, video: { width: this.videoWidth, height: this.videoHeight, transform: 'scaleX(-1)' } }
-        navigator.mediaDevices.getUserMedia(constraints).then(function (stream) {
-          // 旧的浏览器可能没有srcObject
-          if ('srcObject' in _this.thisVideo) {
-            _this.thisVideo.srcObject = stream
-          } else {
-            // 避免在新的浏览器中使用它，因为它正在被弃用。
-            _this.thisVideo.src = window.URL.createObjectURL(stream)
-          }
-          _this.thisVideo.onloadedmetadata = function (e) {
-            _this.thisVideo.play()
-          }
-        }).catch(err => {
-          console.log(err)
-        })
-      },
-```
-
-拍照上传模块，文件手动上传与其类似
-```javascript
-setImage () {
-        var _this = this
-        // 点击，canvas画图
-        _this.thisContext.drawImage(_this.thisVideo, 0, 0, _this.videoWidth, _this.videoHeight)
-        // 获取图片base64链接
-        var image = this.thisCancas.toDataURL('image/png')
-        _this.imgSrc = image
-        this.$emit('refreshDataList', this.imgSrc)
-        this.percentage = 0;
-        this.dialogTableVisible = true;
-        this.url_1 = "";
-        this.url_2 = "";
-        this.srcList = [];
-        this.srcList1 = [];
-        this.wait_return = "";
-        this.wait_upload = "";
-        this.feature_list = [];
-        this.feat_list = [];
-        this.fullscreenLoading = true;
-        this.loading = true;
-        //this.showbutton = false;
-        this.person_num = 0;
-        this.camerafilename = this.getCurrentDateTime();
-        let file = this.dataURLtoFile(this.imgSrc, "camerafile"+ this.camerafilename +".jpg");//存储文件时，重命名打上时间戳留档
-        this.url_1 = this.$options.methods.getObjectURL(file);
-        let param = new FormData(); //创建form对象
-        param.append("file", file, file.name); //通过append向form对象添加数据
-        var timer = setInterval(() => {
-          this.myFunc();
-        }, 30);
-        let config = {
-          headers: { "Content-Type": "multipart/form-data" },
-        }; //添加请求头
-        axios
-          .post(this.server_url + "/upload", param, config)
-          .then((response) => {
-          this.percentage = 100;
-          clearInterval(timer);
-          this.url_1 = response.data.image_url;
-          this.srcList.push(this.url_1);
-          this.url_2 = response.data.draw_url;
-          this.srcList1.push(this.url_2);
-          this.fullscreenLoading = false;
-          this.loading = false;
-          this.feat_list = Object.keys(response.data.image_info);
-          for (var i = 0; i < this.feat_list.length; i++) {
-            response.data.image_info[this.feat_list[i]][2] = this.feat_list[i];
-            this.feature_list.push(response.data.image_info[this.feat_list[i]]);
-          this.person_num++;//人数加一
-          }
-          if (this.person_num < this.numAlert) {
-            this.noticeSafe();
-          } else {
-            this.noticeAlert();
-          }
-          this.feature_list.push(response.data.image_info);
-          this.feature_list_1 = this.feature_list[0];
-          this.dialogTableVisible = false;
-          this.percentage = 0;
-          this.notice1();
-        });
-      },
-```
-
-# 6. 启动项目：
-
-在 Flask 后端项目下启动后端代码：
-
-```bash
-python app.py
-```
-
-在 VUE 前端项目下，先安装依赖：
-
-```bash
+8. 前端部署（开发）
+本项目前端基于 Vue 开发，实现图像上传、检测结果展示等功能。
+安装依赖
 npm install
-```
-
-然后运行前端：
-
-```bash
+启动前端
 npm run serve
-```
-
-如果遇到opensslError，可以使用：
-
-```bash
+若出现 OpenSSL 报错
 set NODE_OPTIONS=--openssl-legacy-provider
-```
+启动完成后，在浏览器访问本地前端页面即可。
 
-然后在浏览器打开[localhost](https://space.bilibili.com/355272176)即可：
 
-# 7. 更新纪录：
+9. 项目运行流程
+第一步：启动后端服务
+python app.py
+第二步：启动前端服务
+npm install
+npm run serve
+第三步：打开前端页面
 
--V1.0 初始化项目，基础功能构建
+在浏览器中打开本地服务页面，上传无人机采集图像，即可查看障碍物识别结果。
 
--V1.1 修改路径引用方式，支持生成独立部署版本，可大幅度减轻客户机配置压力
+10. 更新记录
+V1.0
 
-前端生成命令
-```bash
-npm run build #先使用npm构建
-pkg -t win package.json #再使用pkg打包
-```
-后端生成命令
-```bash
-pyinstaller app.spec #app.spec文件可以使用pyinstaller -F app.py命令自动生成，主要需要修改datas和hiddenimports字段
-```
-# 8. 本人所用包列表：<a id="article_button"></a>
+完成项目基础框架搭建
 
-```text
-Python 3.10.6
+实现图像上传与目标检测功能
 
-absl-py                   1.3.0                     <pip>
-asttokens                 2.1.0                     <pip>
-backcall                  0.2.0                     <pip>
-bzip2                     1.0.8                he774522_0    http://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main
-ca-certificates           2022.10.11           haa95532_0    http://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main
-cachetools                5.2.0                     <pip>
-certifi                   2022.9.24       py310haa95532_0    http://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main
-charset-normalizer        2.1.1                     <pip>
-click                     8.1.3                     <pip>
-colorama                  0.4.6                     <pip>
-contourpy                 1.0.6                     <pip>
-cycler                    0.11.0                    <pip>
-decorator                 5.1.1                     <pip>
-easydict                  1.10                      <pip>
-executing                 1.2.0                     <pip>
-Flask                     2.2.2                     <pip>
-Flask-Cors                3.0.10                    <pip>
-Flask-SQLAlchemy          3.0.3                     <pip>
-fonttools                 4.38.0                    <pip>
-google-auth               2.14.1                    <pip>
-google-auth-oauthlib      0.4.6                     <pip>
-greenlet                  2.0.2                     <pip>
-grpcio                    1.50.0                    <pip>
-idna                      3.4                       <pip>
-ipython                   8.6.0                     <pip>
-itsdangerous              2.1.2                     <pip>
-jedi                      0.18.1                    <pip>
-Jinja2                    3.1.2                     <pip>
-kiwisolver                1.4.4                     <pip>
-libffi                    3.4.2                hd77b12b_4    http://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main
-Markdown                  3.4.1                     <pip>
-MarkupSafe                2.1.1                     <pip>
-matplotlib                3.6.2                     <pip>
-matplotlib-inline         0.1.6                     <pip>
-numpy                     1.23.4                    <pip>
-oauthlib                  3.2.2                     <pip>
-opencv-python             4.5.4.60                  <pip>
-openssl                   1.1.1s               h2bbff1b_0    http://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main
-packaging                 21.3                      <pip>
-pandas                    1.5.1                     <pip>
-parso                     0.8.3                     <pip>
-pickleshare               0.7.5                     <pip>
-Pillow                    9.3.0                     <pip>
-pip                       22.2.2          py310haa95532_0    http://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main
-prompt-toolkit            3.0.32                    <pip>
-protobuf                  3.20.1                    <pip>
-psutil                    5.9.4                     <pip>
-pure-eval                 0.2.2                     <pip>
-pyasn1                    0.4.8                     <pip>
-pyasn1-modules            0.2.8                     <pip>
-Pygments                  2.13.0                    <pip>
-PyMySQL                   1.0.2                     <pip>
-pyparsing                 3.0.9                     <pip>
-python                    3.10.6               hbb2ffb3_1    http://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main
-python-dateutil           2.8.2                     <pip>
-pytz                      2022.6                    <pip>
-PyYAML                    6.0                       <pip>
-requests                  2.28.1                    <pip>
-requests-oauthlib         1.3.1                     <pip>
-rsa                       4.9                       <pip>
-scipy                     1.9.3                     <pip>
-seaborn                   0.12.1                    <pip>
-setuptools                65.5.0          py310haa95532_0    http://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main
-six                       1.16.0                    <pip>
-SQLAlchemy                2.0.5.post1               <pip>
-sqlite                    3.39.3               h2bbff1b_0    http://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main
-stack-data                0.6.1                     <pip>
-tensorboard               2.11.0                    <pip>
-tensorboard-data-server   0.6.1                     <pip>
-tensorboard-plugin-wit    1.8.1                     <pip>
-thop-0.1.1                2209072238                <pip>
-tk                        8.6.12               h2bbff1b_0    http://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main
-torch                     1.13.0+cu117              <pip>
-torchaudio                0.13.0+cu117              <pip>
-torchvision               0.14.0+cu117              <pip>
-tqdm                      4.64.1                    <pip>
-traitlets                 5.5.0                     <pip>
-typing_extensions         4.4.0                     <pip>
-tzdata                    2022f                h04d1e81_0    http://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main
-urllib3                   1.26.12                   <pip>
-vc                        14.2                 h21ff451_1    http://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main
-vs2015_runtime            14.27.29016          h5e58377_2    http://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main
-wcwidth                   0.2.5                     <pip>
-Werkzeug                  2.2.2                     <pip>
-wheel                     0.37.1             pyhd3eb1b0_0    http://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main
-wincertstore              0.2             py310haa95532_2    http://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main
-xz                        5.2.6                h8cc25b3_0    http://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main
-zlib                      1.2.13               h8cc25b3_0    http://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main
-```
+完成前后端联调
 
-# 特别鸣谢✨项目参考：
+V1.1
 
-🤞[YOLOv5 🚀 in PyTorch > ONNX > CoreML > TFLite](https://github.com/ultralytics/yolov5)
+将检测模型升级为 YOLOv8
 
-🤞[基于Flask开发后端、VUE开发前端框架，在WEB端部署YOLOv5目标检测模型](https://github.com/liuxiaoxiao666/Yolov5-Flask-VUE)
+优化障碍物识别效果
 
-🤞[Person and Car Detector](https://github.com/KananVyas/person_car_detection_yolov5)
+改进系统界面展示
+
+支持无人机场景下的障碍物检测任务
+
+11. 依赖环境示例
+
+推荐环境如下：
+
+Python 3.10
+torch 1.13.0+cu117
+torchvision 0.14.0+cu117
+torchaudio 0.13.0+cu117
+ultralytics
+opencv-python
+Flask
+Flask-Cors
+Flask-SQLAlchemy
+numpy
+matplotlib
+PyYAML
+pandas
+PyMySQL
+
+可使用以下命令查看当前环境：
+
+conda list
+pip list
