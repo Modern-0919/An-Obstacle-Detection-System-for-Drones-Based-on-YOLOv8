@@ -22,8 +22,10 @@
 
 ### 查看本机 GPU 信息
 
+
 ```shell
 nvidia-smi
+```
 
 查看 CUDA 是否安装成功
 nvcc -V
@@ -33,12 +35,13 @@ nvcc -V
 请根据本机 CUDA 版本安装对应版本的 PyTorch。
 
 示例安装命令：
-
+```shell
 conda install pytorch torchvision torchaudio pytorch-cuda=11.7 -c pytorch -c nvidia
 验证 GPU 是否可用
 import torch
 print(torch.cuda.device_count())   # GPU 数量，应大于 0
 print(torch.cuda.is_available())   # 是否可用，应为 True
+```
 
 3. 系统效果展示
 
@@ -72,9 +75,13 @@ YOLOv8 官方项目地址：
 Ultralytics YOLO
 
 安装 ultralytics
+```shell
 pip install ultralytics
+```
 训练命令示例
+```shell
 yolo detect train data=data/drone_obstacle.yaml model=yolov8m.pt epochs=100 imgsz=640 batch=8
+```
 参数说明
 data：数据集配置文件
 model：预训练模型
@@ -85,6 +92,7 @@ batch：批大小
 
 6. YOLOv8 模型预测
 命令行预测示例
+```shell
 yolo detect predict model=weights/best.pt source=demo.jpg
 Python 调用示例
 from ultralytics import YOLO
@@ -98,7 +106,7 @@ for result in results:
         cls_id = int(box.cls[0])
         conf = float(box.conf[0])
         print(f"class_id: {cls_id}, confidence: {conf:.3f}")
-
+```
 系统可输出：
 目标类别
 边界框坐标
@@ -112,7 +120,7 @@ for result in results:
 启动后端
 
 在 Flask 后端项目目录下运行：
-
+```shell
 python app.py
 路由示例
 @app.route('/')
@@ -126,15 +134,22 @@ def testdb():
     db.close()
     return jsonify({'status': 1,
                     'historical_data': show_data_db})
-
+                    
+```
 8. 前端部署（开发）
 本项目前端基于 Vue 开发，实现图像上传、检测结果展示等功能。
 安装依赖
+```shell
 npm install
+```
 启动前端
+```shell
 npm run serve
+```
 若出现 OpenSSL 报错
+```shell
 set NODE_OPTIONS=--openssl-legacy-provider
+```
 启动完成后，在浏览器访问本地前端页面即可。
 
 
@@ -152,25 +167,20 @@ npm run serve
 V1.0
 
 完成项目基础框架搭建
-
 实现图像上传与目标检测功能
-
 完成前后端联调
 
 V1.1
 
 将检测模型升级为 YOLOv8
-
 优化障碍物识别效果
-
 改进系统界面展示
-
 支持无人机场景下的障碍物检测任务
 
 11. 依赖环境示例
 
 推荐环境如下：
-
+```shell
 Python 3.10
 torch 1.13.0+cu117
 torchvision 0.14.0+cu117
@@ -185,8 +195,9 @@ matplotlib
 PyYAML
 pandas
 PyMySQL
-
+```
 可使用以下命令查看当前环境：
-
+```shell
 conda list
 pip list
+```
