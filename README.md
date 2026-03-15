@@ -43,7 +43,7 @@ print(torch.cuda.device_count())   # GPU 数量，应大于 0
 print(torch.cuda.is_available())   # 是否可用，应为 True
 ```
 
-3. 系统效果展示
+## 3. 系统效果展示
 
 ## 系统效果展示
 ![检测效果图1](./Readme_assets/main1.png)
@@ -52,7 +52,7 @@ print(torch.cuda.is_available())   # 是否可用，应为 True
 ![检测效果图4](./Readme_assets/main4.png)
 ![检测效果图5](./Readme_assets/main5.png)
 
-4. 项目结构
+## 4. 项目结构
 .
 ├── back-end                  # Flask 后端
 │   ├── app.py
@@ -69,7 +69,7 @@ print(torch.cuda.is_available())   # 是否可用，应为 True
 ├── Readme_assets             # README 图片资源
 └── README.md
 
-5. YOLOv8 模型训练
+## 5. YOLOv8 模型训练
 
 YOLOv8 官方项目地址：
 Ultralytics YOLO
@@ -90,7 +90,7 @@ imgsz：输入图像尺寸
 batch：批大小
 训练参数并不是越大越好，应根据数据集规模、显存大小和实验结果综合调整。
 
-6. YOLOv8 模型预测
+## 6. YOLOv8 模型预测
 命令行预测示例
 ```shell
 yolo detect predict model=weights/best.pt source=demo.jpg
@@ -113,7 +113,7 @@ for result in results:
 检测置信度
 若需要仅检测特定障碍物类别，可在后处理阶段增加类别筛选逻辑。
 
-7. 后端部署（开发）
+## 7. 后端部署（开发）
 
 本项目后端基于 Flask 开发，负责接收前端上传的图像并调用 YOLOv8 模型完成检测。
 
@@ -136,7 +136,7 @@ def testdb():
                     'historical_data': show_data_db})
                     
 ```
-8. 前端部署（开发）
+## 8. 前端部署（开发）
 本项目前端基于 Vue 开发，实现图像上传、检测结果展示等功能。
 安装依赖
 ```shell
@@ -153,7 +153,7 @@ set NODE_OPTIONS=--openssl-legacy-provider
 启动完成后，在浏览器访问本地前端页面即可。
 
 
-9. 项目运行流程
+## 9. 项目运行流程
 第一步：启动后端服务
 python app.py
 第二步：启动前端服务
@@ -163,21 +163,21 @@ npm run serve
 
 在浏览器中打开本地服务页面，上传无人机采集图像，即可查看障碍物识别结果。
 
-10. 更新记录
-V1.0
+## 10. 更新记录
+## V1.0
 
 完成项目基础框架搭建
 实现图像上传与目标检测功能
 完成前后端联调
 
-V1.1
+## V1.1
 
 将检测模型升级为 YOLOv8
 优化障碍物识别效果
 改进系统界面展示
 支持无人机场景下的障碍物检测任务
 
-11. 依赖环境示例
+## 11. 依赖环境示例
 
 推荐环境如下：
 ```shell
